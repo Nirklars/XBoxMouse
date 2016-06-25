@@ -11,7 +11,7 @@ LastRT := 0 ; Default values
 LastLT := 0 ; Default values
 
 ; Global strings
-AppVersion = 1.5
+AppVersion = 1.51
 AppJoystickMessage = No joysticks or gamepads were detected! Please press button A when you have inserted a controller or right click the system tray and select "Reload"!`nThis message will not be shown again!
 
 ; -----------------LOAD SETTINGS
@@ -118,13 +118,15 @@ IniWrite, %EscapeDoubleTapDelay%, %inifile%, Settings, EscapeDoubleTapDelay
 IniRead, MouseCursorSpeedSlowdownMultiplier, %inifile%, Settings, MouseCursorSpeedSlowdownMultiplier, 3
 IniWrite, %MouseCursorSpeedSlowdownMultiplier%, %inifile%, Settings, MouseCursorSpeedSlowdownMultiplier 
 
-IniRead, WindowedFullscreen, %inifile%, Extras, WindowedFullscreen, 0
+IniRead, WindowedFullscreen, %inifile%, Extras, WindowedFullscreen, 1
 IniWrite, %WindowedFullscreen%, %inifile%, Extras, WindowedFullscreen
 if WindowedFullscreen = 1
 {
 	Hotkey ^!F12, WindowedFullscreenToggle, on
 }
 
+IniRead, WindowedFullscreenOldMethod, %inifile%, Extras, WindowedFullscreenOldMethod, 0
+IniWrite, %WindowedFullscreenOldMethod%, %inifile%, Extras, WindowedFullscreenOldMethod
 
 ; Error handling ini writing
 if ErrorLevel
@@ -1151,24 +1153,49 @@ DigitalPad:
 return
 
 WindowedFullscreenToggle:
-	WinGet, TempWindowID, ID, A
-	If (WindowID != TempWindowID)
+	if WindowedFullscreenOldMethod = 1
 	{
-	  WindowID:=TempWindowID
-	  WindowState:=0
+		WinGet, TempWindowID, ID, A
+		If (WindowID != TempWindowID)
+		{
+			WindowID:=TempWindowID
+			WindowState:=0
+		}
+		If (WindowState != 1)
+		{
+			WinGetPos, WinPosX, WinPosY, WindowWidth, WindowHeight, ahk_id %WindowID%
+			WinSet, Style, ^0xC40000, ahk_id %WindowID%
+			WinMove, ahk_id %WindowID%, , 0, 0, A_ScreenWidth, A_ScreenHeight
+		}
+		Else
+		{
+			WinSet, Style, ^0xC40000, ahk_id %WindowID%
+			WinMove, ahk_id %WindowID%, , WinPosX, WinPosY, WindowWidth, WindowHeight
+		}
+		WindowState:=!WindowState
 	}
-	If (WindowState != 1)
+	else
 	{
-	  WinGetPos, WinPosX, WinPosY, WindowWidth, WindowHeight, ahk_id %WindowID%
-	  WinSet, Style, ^0xC40000, ahk_id %WindowID%
-	  WinMove, ahk_id %WindowID%, , 0, 0, A_ScreenWidth, A_ScreenHeight
-	}
-	Else
-	{
-	  WinSet, Style, ^0xC40000, ahk_id %WindowID%
-	  WinMove, ahk_id %WindowID%, , WinPosX, WinPosY, WindowWidth, WindowHeight
-	}
-	WindowState:=!WindowState
+		WinGet, WindowID, ID, A
+		WinGet Style, Style, ahk_id %WindowID% ; retrieve window data
+
+		if (Style & 0xC40000) ; check if object is available
+		{
+			WinSet Style, -0xC40000, ahk_id %WindowID% ; hide thickframe/sizebox
+			WinSet Style, -0xC00000, ahk_id %WindowID% ; hide title bar
+			WinSet Style, -0x800000, ahk_id %WindowID% ; hide thin-line border
+			WinSet Style, -0x400000, ahk_id %WindowID% ; hide dialog frame
+		}
+		else
+		{
+			WinSet Style, +0xC40000, ahk_id %WindowID% ; show thickframe/sizebox
+			WinSet Style, +0xC00000, ahk_id %WindowID% ; show title bar
+			WinSet Style, +0x800000, ahk_id %WindowID% ; show thin-line border
+			WinSet Style, +0x400000, ahk_id %WindowID% ; show dialog frame
+		}
+
+		WinMove, ahk_id %WindowID%, , 0, 0, A_ScreenWidth, A_ScreenHeight
+	}	
 return
 
 ; ########################################## FUNCTIONS / SUBS ####################################
