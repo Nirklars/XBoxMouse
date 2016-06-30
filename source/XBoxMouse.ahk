@@ -11,7 +11,7 @@ LastRT := 0 ; Default values
 LastLT := 0 ; Default values
 
 ; Global strings
-AppVersion = 1.51
+AppVersion = 1.52
 AppJoystickMessage = No joysticks or gamepads were detected! Please press button A when you have inserted a controller or right click the system tray and select "Reload"!`nThis message will not be shown again!
 
 ; -----------------LOAD SETTINGS
@@ -1177,14 +1177,16 @@ WindowedFullscreenToggle:
 	else
 	{
 		WinGet, WindowID, ID, A
-		WinGet Style, Style, ahk_id %WindowID% ; retrieve window data
-
+		WinGet Style, Style, ahk_id %WindowID% ; retrieve window data	
 		if (Style & 0xC40000) ; check if object is available
 		{
+			WinGetPos, WinPosX, WinPosY, WindowWidth, WindowHeight, ahk_id %WindowID%
+			;msgbox %WinPosX%  %WinPosY%  %WindowWidth%  %WindowHeight%
 			WinSet Style, -0xC40000, ahk_id %WindowID% ; hide thickframe/sizebox
 			WinSet Style, -0xC00000, ahk_id %WindowID% ; hide title bar
 			WinSet Style, -0x800000, ahk_id %WindowID% ; hide thin-line border
 			WinSet Style, -0x400000, ahk_id %WindowID% ; hide dialog frame
+			WinMove, ahk_id %WindowID%, , 0, 0, A_ScreenWidth, A_ScreenHeight
 		}
 		else
 		{
@@ -1192,9 +1194,8 @@ WindowedFullscreenToggle:
 			WinSet Style, +0xC00000, ahk_id %WindowID% ; show title bar
 			WinSet Style, +0x800000, ahk_id %WindowID% ; show thin-line border
 			WinSet Style, +0x400000, ahk_id %WindowID% ; show dialog frame
+			WinMove, ahk_id %WindowID%, , WinPosX, WinPosY, WindowWidth, WindowHeight
 		}
-
-		WinMove, ahk_id %WindowID%, , 0, 0, A_ScreenWidth, A_ScreenHeight
 	}	
 return
 
